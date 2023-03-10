@@ -38,6 +38,8 @@ var app = http.createServer(function (request, response) {
     topic.search(request, response);
   } else if (pathname === '/search_result') {
     topic.search_result(request, response);
+  } else if (pathname === '/login') {
+    topic.login(request, response);
   } else {
     response.writeHead(404);
     response.end('Not found');
