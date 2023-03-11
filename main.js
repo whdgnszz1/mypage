@@ -1,10 +1,15 @@
+// const express = require('express')
+// const app = express()
 var http = require('http');
 var url = require('url');
 var topic = require('./lib/topic');
 var author = require('./lib/author');
+// var topicRouter = require('./routes/topic.js')
+// app.use('/topic', topicRouter);
 
 
-var app = http.createServer(function (request, response) {
+
+var app1 = http.createServer(function (request, response) {
   var _url = request.url;
   var queryData = url.parse(_url, true).query;
   var pathname = url.parse(_url, true).pathname;
@@ -51,4 +56,4 @@ var app = http.createServer(function (request, response) {
     response.end('Not found');
   }
 });
-app.listen(5001);
+app1.listen(3000);
