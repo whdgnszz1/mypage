@@ -42,6 +42,10 @@ var app = http.createServer(function (request, response) {
     topic.login(request, response);
   } else if (pathname === '/login_process') {
     topic.login_process(request, response);
+    
+  } else if (pathname === '/logout_process') {
+    topic.logout_process(request, response);
+    
   } else {
     response.writeHead(404);
     response.end('Not found');
