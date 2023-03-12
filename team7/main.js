@@ -7,10 +7,15 @@ var helmet = require('helmet')
 app.use(helmet());
 var session = require('express-session')
 var FileStore = require('session-file-store')(session)
+var flash = require('connect-flash');
+var template = require('./lib/template');
+var db = require('./routes/db');
 
 
 app.use(express.static('public'));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(compression());
 app.use(session({
   secret: 'asadlfkj!@#!@#dfgasdg',
@@ -18,49 +23,20 @@ app.use(session({
   saveUninitialized: true,
   store: new FileStore()
 }))
+app.use(flash());
 
-var passport = require('passport');
-var LocalStrategy = require('passport-local');
-    
-passport.use(new LocalStrategy(
-  {
-    usernameField: 'email',
-    passwordField: 'pwd'
-  },
-  function verify(username, password, cb) {
-    console.log('LocalStrategy', username, password)
-  /*
-  db.get('SELECT * FROM users WHERE username = ?', [username], function (err, user) {
-    if (err) { return cb(err); }
-    if (!user) { return cb(null, false, { message: 'Incorrect username or password.' }); }
-
-    crypto.pbkdf2(password, user.salt, 310000, 32, 'sha256', function (err, hashedPassword) {
-      if (err) { return cb(err); }
-      if (!crypto.timingSafeEqual(user.hashed_password, hashedPassword)) {
-        return cb(null, false, { message: 'Incorrect username or password.' });
-      }
-      return cb(null, user);
-    });
-  });
-  */
-}));
-
-app.post('/auth/login_process', passport.authenticate('local', {
-  successRedirect: '/',
-  failureRedirect: '/auth/login'
-}));
-
+var passport = require('./lib/passport')(app);
 
 app.get('*', function (request, response, next) {
-  fs.readdir('./data', function (error, filelist) {
-    request.list = filelist;
+  db.query(`SELECT * FROM topic`, function (error, topics) {
+    request.list = template.list(topics);
     next();
   });
 });
 
 var indexRouter = require('./routes/index');
 var topicRouter = require('./routes/topic');
-var authRouter = require('./routes/auth');
+var authRouter = require('./routes/auth')(passport);
 
 app.use('/', indexRouter);
 app.use('/topic', topicRouter);

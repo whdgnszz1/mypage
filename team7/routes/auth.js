@@ -1,52 +1,74 @@
 var express = require('express');
 var router = express.Router();
-var path = require('path');
-var fs = require('fs');
-var sanitizeHtml = require('sanitize-html');
 var template = require('../lib/template.js');
+var db = require('./db');
 
-var authData = {
-  email: 'egoing777@gmail.com',
-  password: '111111',
-  nickname: 'egoing'
-}
 
-router.get('/login', function (request, response) {
-  var title = 'WEB - login';
-  var list = template.list(request.list);
-  var html = template.HTML(title, list, `
-    <form action="/auth/login_process" method="post">
-      <p><input type="text" name="email" placeholder="email"></p>
-      <p><input type="password" name="pwd" placeholder="password"></p>
-      <p>
-        <input type="submit" value="login">
-      </p>
-    </form>
-  `, '');
-  response.send(html);
-});
+module.exports = function (passport) {
+  router.get('/login', function (request, response) {
+    var fmsg = request.flash();
+    var feedback = '';
+    if (fmsg.error) {
+      feedback = fmsg.error[0];
+    }
+    db.query(`SELECT * FROM topic`, function (error, topics) {
 
-/*
-router.post('/login_process', function (request, response) {
-  var post = request.body;
-  var email = post.email;
-  var password = post.pwd;
-  if(email === authData.email && password === authData.password){
-    request.session.is_logined = true;
-    request.session.nickname = authData.nickname;
-    request.session.save(function(){
-      response.redirect(`/`);
+      var title = 'WEB - login';
+      var list = template.list(topics);
+      var html = template.HTML(title, list, `
+      <div style="color:red;">${feedback}</div>
+      <form action="/auth/login_process" method="post">
+        <p><input type="text" name="email" placeholder="email"></p>
+        <p><input type="password" name="pwd" placeholder="password"></p>
+        <p>
+          <input type="submit" value="login">
+        </p>
+      </form>
+    `, '');
+      response.send(html);
     });
-  } else {
-    response.send('Who?');
-  }
-});
-*/
+  });
 
-router.get('/logout', function (request, response) {
-  request.session.destroy(function(err){
-    response.redirect('/');
+  router.post('/login_process',
+    passport.authenticate('local', {
+      successRedirect: '/',
+      failureRedirect: '/auth/login',
+      failureFlash: true,
+      successFlash: true
+    }));
+
+  router.get('/register', function (request, response) {
+    var fmsg = request.flash();
+    var feedback = '';
+    if (fmsg.error) {
+      feedback = fmsg.error[0];
+    }
+    db.query(`SELECT * FROM topic`, function (error, topics) {
+
+    var title = 'WEB - login';
+    var list = template.list(topics);
+    var html = template.HTML(title, list, `
+        <div style="color:red;">${feedback}</div>
+        <form action="/auth/register_process" method="post">
+          <p><input type="text" name="email" placeholder="email"></p>
+          <p><input type="password" name="pwd" placeholder="password"></p>
+          <p><input type="password" name="pwd2" placeholder="password"></p>
+          <p><input type="text" name="displayName" placeholder="display name"></p>
+          <p>
+            <input type="submit" value="register">
+          </p>
+        </form>
+      `, '');
+    response.send(html);
   });
 });
 
-module.exports = router;
+  router.get('/logout', function (request, response) {
+    request.logout();
+    request.session.save(function () {
+      response.redirect('/');
+    });
+  });
+
+  return router;
+}
